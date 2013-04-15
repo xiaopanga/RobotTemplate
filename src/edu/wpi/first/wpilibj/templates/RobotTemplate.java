@@ -123,9 +123,12 @@ public class RobotTemplate extends SimpleRobot {
                     leadScrew.set(0);
                 }
             }
+            double X_val,Y_val,Rotation_val;
+            X_val = (Math.abs(x)<0.05)? 0:x*x;
+            Y_val = (Math.abs(y)<0.05)? 0:y*y;
+            Rotation_val = (Math.abs(rotation)<0.05)? 0:rotation*0.6;
             
-            
-            robot.mecanumDrive_Cartesian(x*x, y*y, rotation*0.6, 0);
+            robot.mecanumDrive_Cartesian(X_val, Y_val, Rotation_val, 0);
             
             Timer.delay(0.01);
         }
