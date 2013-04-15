@@ -16,10 +16,6 @@ import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Dashboard;
 import edu.wpi.first.wpilibj.DriverStation;
-
-
-        
-
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the SimpleRobot
@@ -72,7 +68,6 @@ public class RobotTemplate extends SimpleRobot {
             
         }
     }
-
     /**
      * This function is called once each time the robot enters operator control.
      */
@@ -86,8 +81,8 @@ public class RobotTemplate extends SimpleRobot {
             flipperOn = left.getTrigger();
             leadUp = left.getRawButton(3);
             leadDown = left.getRawButton(2);
-            timedUp = left.getRawButton(6);
-            timedDown = left.getRawButton(7);
+            timedUp = left.getRawButton(8);
+            timedDown = left.getRawButton(9);
             shooterOn= right.getTrigger();
             if(flipperOn){
                 flipper.set(-1);
