@@ -9,6 +9,11 @@ package edu.wpi.first.wpilibj.templates;
 
 
 import edu.wpi.first.wpilibj.SimpleRobot;
+import edu.wpi.first.wpilibj.RobotDrive;
+import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.Jaguar;
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -18,18 +23,87 @@ import edu.wpi.first.wpilibj.SimpleRobot;
  * directory.
  */
 public class RobotTemplate extends SimpleRobot {
+    
+    RobotDrive robot = new RobotDrive(1,2,3,4);
+    Joystick left = new Joystick(1);
+    Joystick right = new Joystick(2);
+    Jaguar shooter1 = new Jaguar(5);
+    Jaguar shooter2 = new Jaguar(6);
+    Jaguar flipper = new Jaguar(7);
+    Victor leadScrew = new Victor(8);
+    Timer timer = new Timer();
+    double startTime;
+    double delayStartTime = 2000;// unit of millisecond
+    double delayFlipperTimer = 2000;// unit of millisecond
+    double x,y,rotation;
+    boolean flipperOn, leadUp,leadDown,shooterOn;
     /**
      * This function is called once each time the robot enters autonomous mode.
      */
     public void autonomous() {
+        this.safetyOff();
         
+        shooter1.setSafetyEnabled(true);
+        shooter2.setSafetyEnabled(true);
+        flipper.setSafetyEnabled(true);
+        startTime = timer.get();
+        delayStartTime = 0;//how to get value from Dashboard?
+        while(this.isAutonomous()&&this.isEnabled()){
+            if(startTime+delayStartTime>timer.get())
+            {
+                shooter1.set(1);
+                shooter2.set(1);
+                if(startTime+delayStartTime+delayFlipperTimer>timer.get()){
+                    flipper.set(-1);
+                }
+            }else{
+                shooter1.set(0);
+                shooter2.set(0);
+                flipper.set(0);
+            }
+            Timer.delay(0.01);
+            
+        }
     }
 
     /**
      * This function is called once each time the robot enters operator control.
      */
     public void operatorControl() {
-
+        this.safetyOn();
+        while(this.isOperatorControl()&&this.isEnabled()){
+            x = left.getX();
+            y = left.getY();
+            rotation = right.getX();
+            flipperOn = left.getTrigger();
+            leadUp = left.getRawButton(3);
+            leadDown = left.getRawButton(2);
+            shooterOn= right.getTrigger();
+            if(flipperOn){
+                flipper.set(-1);
+            }else{
+                flipper.set(0);
+            }
+            if(shooterOn){
+                shooter1.set(1);
+                shooter2.set(1);
+            }else{
+                shooter1.set(0);
+                shooter2.set(0);
+            }
+            if(leadUp){
+                leadScrew.set(1);
+            }else{
+                if(leadDown){
+                    leadScrew.set(-1);
+                }else{
+                    leadScrew.set(0);
+                }
+            }
+            robot.mecanumDrive_Cartesian(x*x, y*y, rotation*0.6, 0);
+            
+            Timer.delay(0.01);
+        }
     }
     
     /**
@@ -37,5 +111,19 @@ public class RobotTemplate extends SimpleRobot {
      */
     public void test() {
     
+    }
+    public void safetyOff(){
+        robot.setSafetyEnabled(false);
+        shooter1.setSafetyEnabled(false);
+        shooter2.setSafetyEnabled(false);
+        flipper.setSafetyEnabled(false);
+        leadScrew.setSafetyEnabled(false);
+    }
+    public void safetyOn(){
+        robot.setSafetyEnabled(true);
+        shooter1.setSafetyEnabled(true);
+        shooter2.setSafetyEnabled(true);
+        flipper.setSafetyEnabled(true);
+        leadScrew.setSafetyEnabled(true);
     }
 }
