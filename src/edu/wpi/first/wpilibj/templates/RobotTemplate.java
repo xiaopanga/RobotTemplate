@@ -14,6 +14,11 @@ import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Dashboard;
+import edu.wpi.first.wpilibj.DriverStation;
+
+
+        
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -24,6 +29,7 @@ import edu.wpi.first.wpilibj.Timer;
  */
 public class RobotTemplate extends SimpleRobot {
     
+    Dashboard board = DriverStation.getInstance().getDashboardPackerLow();
     RobotDrive robot = new RobotDrive(1,2,3,4);
     Joystick left = new Joystick(1);
     Joystick right = new Joystick(2);
@@ -32,22 +38,23 @@ public class RobotTemplate extends SimpleRobot {
     Jaguar flipper = new Jaguar(7);
     Victor leadScrew = new Victor(8);
     Timer timer = new Timer();
-    double startTime;
+    double startTime, timed ;
     double delayStartTime = 2000;// unit of millisecond
     double delayFlipperTimer = 2000;// unit of millisecond
     double x,y,rotation;
-    boolean flipperOn, leadUp,leadDown,shooterOn;
+    double rise_time=0;
+    boolean flipperOn, leadUp,leadDown,shooterOn, timedUp, timedDown;
     /**
      * This function is called once each time the robot enters autonomous mode.
      */
     public void autonomous() {
         this.safetyOff();
-        
         shooter1.setSafetyEnabled(true);
         shooter2.setSafetyEnabled(true);
         flipper.setSafetyEnabled(true);
         startTime = timer.get();
-        delayStartTime = 0;//how to get value from Dashboard?
+        
+        //delayStartTime = 0;//how to get value from Dashboard?
         while(this.isAutonomous()&&this.isEnabled()){
             if(startTime+delayStartTime>timer.get())
             {
@@ -71,6 +78,7 @@ public class RobotTemplate extends SimpleRobot {
      */
     public void operatorControl() {
         this.safetyOn();
+        double time;
         while(this.isOperatorControl()&&this.isEnabled()){
             x = left.getX();
             y = left.getY();
@@ -78,6 +86,8 @@ public class RobotTemplate extends SimpleRobot {
             flipperOn = left.getTrigger();
             leadUp = left.getRawButton(3);
             leadDown = left.getRawButton(2);
+            timedUp = left.getRawButton(6);
+            timedDown = left.getRawButton(7);
             shooterOn= right.getTrigger();
             if(flipperOn){
                 flipper.set(-1);
@@ -100,6 +110,21 @@ public class RobotTemplate extends SimpleRobot {
                     leadScrew.set(0);
                 }
             }
+            if(timedUp && timed<5000){
+                time=timer.get();
+                leadScrew.set(1);
+                timed = timed +(timer.get()-time);
+            }else{
+                if(timedDown && timed>0){
+                    time=timer.get();
+                    leadScrew.set(-1);
+                    timed = timed -(timer.get()-time);
+                }else{
+                    leadScrew.set(0);
+                }
+            }
+            
+            
             robot.mecanumDrive_Cartesian(x*x, y*y, rotation*0.6, 0);
             
             Timer.delay(0.01);
