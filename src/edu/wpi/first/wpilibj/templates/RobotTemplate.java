@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Dashboard;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.camera.*;
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the SimpleRobot
@@ -25,21 +26,45 @@ import edu.wpi.first.wpilibj.DriverStation;
  */
 public class RobotTemplate extends SimpleRobot {
     
+    
+    AxisCamera camera = AxisCamera.getInstance();
     Dashboard board = DriverStation.getInstance().getDashboardPackerLow();
-    RobotDrive robot = new RobotDrive(1,2,3,4);
-    Joystick left = new Joystick(1);
-    Joystick right = new Joystick(2);
-    Jaguar shooter1 = new Jaguar(5);
-    Jaguar shooter2 = new Jaguar(6);
-    Jaguar flipper = new Jaguar(7);
-    Victor leadScrew = new Victor(8);
-    Timer timer = new Timer();
+    RobotDrive robot;
+    Joystick left;
+    Joystick right;
+    Jaguar shooter1;
+    Jaguar shooter2;
+    Jaguar flipper;
+    Victor leadScrew;
+    Timer timer;
     double startTime, timed ;
-    double delayStartTime = 2000;// unit of millisecond
-    double delayFlipperTimer = 2000;// unit of millisecond
+    double delayStartTime;
+    double delayFlipperTimer;
     double x,y,rotation;
-    double rise_time=0;
+    double riseTime;
     boolean flipperOn, leadUp,leadDown,shooterOn, timedUp, timedDown;
+    //robot initialization stuff here
+    public void robotInit() {
+        timer = new Timer();
+        //joystick initialization 
+        right = new Joystick(2);
+        left = new Joystick(1);
+        //motor initialization
+        robot = new RobotDrive(1,3,2,4);
+        leadScrew = new Victor(8);
+        flipper = new Jaguar(7);
+        shooter2 = new Jaguar(6);
+        shooter1 = new Jaguar(5);
+        //camera initialization
+        camera.writeCompression(30);
+        camera.writeMaxFPS(30);
+        camera.writeResolution(AxisCamera.ResolutionT.k320x240);
+        // autonomous delay time in ms
+        delayStartTime = 2000;
+        delayFlipperTimer = 2000;
+        //initial value for leadscrew rise time
+        riseTime =0;
+    }
     /**
      * This function is called once each time the robot enters autonomous mode.
      */
@@ -134,6 +159,13 @@ public class RobotTemplate extends SimpleRobot {
      */
     public void test() {
     
+    }
+    //diabled state
+    public void disabled(){
+        this.safetyOff();
+        while(this.isDisabled()){
+            Timer.delay(0.01);
+        }
     }
     public void safetyOff(){
         robot.setSafetyEnabled(false);
