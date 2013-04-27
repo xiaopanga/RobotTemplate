@@ -15,6 +15,8 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Dashboard;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.camera.*;
+import edu.wpi.first.wpilibj.image.*;
+
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -25,8 +27,8 @@ import edu.wpi.first.wpilibj.camera.*;
  */
 public class RobotTemplate extends SimpleRobot {
 
-    //AxisCamera camera = AxisCamera.getInstance();
-    Dashboard board = DriverStation.getInstance().getDashboardPackerLow();
+    AxisCamera camera;
+    Dashboard board;
     RobotDrive robot;
     Joystick left;
     Joystick right;
@@ -37,12 +39,15 @@ public class RobotTemplate extends SimpleRobot {
     double startTime, timed;
     double delayStartTime;
     double delayFlipperTimer;
-    double x, y, rotation;
+    double x, y, rotation,X_val,Y_val, Rotation_val;
     double riseTime;
     boolean flipperOn, leadUp, leadDown, shooterOn, timedUp, timedDown;
+    ColorImage fromCamera;
+    BinaryImage filteredImage;
     //robot initialization stuff here
 
     public void robotInit() {
+        board = DriverStation.getInstance().getDashboardPackerLow();
         timer = new Timer();
         //joystick initialization 
         right = new Joystick(2);
@@ -55,16 +60,15 @@ public class RobotTemplate extends SimpleRobot {
         motor4 = new Victor(4);
 
         robot = new RobotDrive(motor1, motor2, motor3, motor4);
-        robot.setInvertedMotor(RobotDrive.MotorType.kFrontRight, true);
-        robot.setInvertedMotor(RobotDrive.MotorType.kRearRight, true);
         leadScrew = new Victor(8);
         flipper = new Jaguar(7);
         shooter2 = new Jaguar(6);
         shooter1 = new Jaguar(5);
         //camera initialization
-        //camera.writeCompression(30);
-        //camera.writeMaxFPS(30);
-        //camera.writeResolution(AxisCamera.ResolutionT.k320x240);
+        camera = AxisCamera.getInstance();
+        camera.writeCompression(30);
+        camera.writeMaxFPS(30);
+        camera.writeResolution(AxisCamera.ResolutionT.k320x240);
         // autonomous delay time in ms
         delayStartTime = 2000;
         delayFlipperTimer = 2000;
@@ -107,32 +111,54 @@ public class RobotTemplate extends SimpleRobot {
         this.safetyOn();
         double time;
         while (this.isOperatorControl() && this.isEnabled()) {
+            System.out.println("START");
+            try{
+                System.out.println("Start Image Processing");
+                camera.freshImage();
+                fromCamera=camera.getImage();
+                filteredImage = fromCamera.thresholdHSV(0, 255, 0, 255, 0, 255);
+                
+                System.out.println("End Image Processing");
+            } catch(NIVisionException a){
+                System.out.println("Exception:"+a.getMessage());
+            } catch(Exception v){
+                System.out.println("Exception:"+v.getMessage());
+            }
+            
             x = left.getX();
             y = left.getY();
             rotation = right.getX();
+            System.out.println("joystick value"+" x:"+x+" y:"+y+" rotation:"+rotation+"\n");
             flipperOn = left.getTrigger();
             leadUp = left.getRawButton(3);
             leadDown = left.getRawButton(2);
             timedUp = left.getRawButton(8);
             timedDown = left.getRawButton(9);
             shooterOn = right.getTrigger();
+            System.out.println("Flipper:"+flipperOn+"leadUp:"+leadUp+"leadDown:"+leadDown+"timedUp:"+timedUp+"timedDown:"+timedDown+"shooterOn:"+shooterOn);
+            
             if (flipperOn) {
                 flipper.set(-1);
+                System.out.println("Flipper on");
             } else {
                 flipper.set(0);
             }
             if (shooterOn) {
                 shooter1.set(1);
                 shooter2.set(1);
+                System.out.println("Shooter on");
             } else {
                 shooter1.set(0);
                 shooter2.set(0);
             }
             if (leadUp) {
                 leadScrew.set(1);
+                System.out.println("Lead Screw up");
+                
             } else {
                 if (leadDown) {
                     leadScrew.set(-1);
+                    System.out.println("Lead Screw down");
                 } else {
                     leadScrew.set(0);
                 }
@@ -141,20 +167,35 @@ public class RobotTemplate extends SimpleRobot {
                 time = timer.get();
                 leadScrew.set(1);
                 timed = timed + (timer.get() - time);
+                System.out.println("Lead Screw timed up");
             } else {
                 if (timedDown && timed > 0) {
                     time = timer.get();
                     leadScrew.set(-1);
                     timed = timed - (timer.get() - time);
+                    System.out.println("Lead Screw timed down");
                 } else {
                     leadScrew.set(0);
                 }
             }
-
-            robot.mecanumDrive_Cartesian((Math.abs(x) < 0.05) ? 0 : x * x, (Math.abs(y) < 0.05) ? 0 : y * y, (Math.abs(rotation) < 0.05) ? 0 : rotation * 0.6, 0);
-
+            X_val = (Math.abs(x) < 0.05) ? 0 : x * x;
+            if(x>=0){
+                X_val = X_val;
+            }else{
+                X_val = -X_val;
+            }
+            Y_val = (Math.abs(y) < 0.05) ? 0 : y * y;
+            if(y>=0){
+                Y_val = Y_val; 
+            }else {
+                Y_val = -Y_val;
+            }
+            Rotation_val = (Math.abs(rotation) < 0.05) ? 0 : rotation * 0.6;
+            robot.mecanumDrive_Cartesian(X_val, Y_val , Rotation_val, 0);
+            System.out.println("Mecanum feed value X= "+X_val+" Y="+Y_val+" Z="+Rotation_val );
+            System.out.println("END");
             Timer.delay(0.01);
-        }
+        } 
     }
 
     /**
@@ -162,8 +203,8 @@ public class RobotTemplate extends SimpleRobot {
      */
     public void test() {
     }
+    
     //diabled state
-
     public void disabled() {
         this.safetyOff();
         while (this.isDisabled()) {
