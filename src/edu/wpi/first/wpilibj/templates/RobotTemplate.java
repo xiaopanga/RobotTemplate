@@ -206,6 +206,7 @@ public class RobotTemplate extends SimpleRobot {
      * This function is called once each time the robot enters test mode.
      */
     public void test() {
+        //does nothing
     }
     
     //diabled state
