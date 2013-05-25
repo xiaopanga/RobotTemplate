@@ -16,7 +16,7 @@ import edu.wpi.first.wpilibj.Dashboard;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.camera.*;
 import edu.wpi.first.wpilibj.image.*;
-
+import edu.wpi.first.wpilibj.DriverStationLCD;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -27,43 +27,48 @@ import edu.wpi.first.wpilibj.image.*;
  */
 public class RobotTemplate extends SimpleRobot {
 
+
     AxisCamera camera;
     Dashboard board;
+    DriverStationLCD LCD;
     RobotDrive robot;
     Joystick left;
     Joystick right;
-    Jaguar shooter1, shooter2, flipper;
+    Jaguar  flipper;
+    Victor shooter1, shooter2;
     Victor leadScrew;
-    Victor motor1, motor2, motor3, motor4;
+    Jaguar motor1, motor2, motor3, motor4;
     Timer timer;
     double startTime, timed;
     double delayStartTime;
     double delayFlipperTimer;
-    double x, y, rotation,X_val,Y_val, Rotation_val;
+    double x, y, rotation,xVal,yVal, rotationVal;
     double riseTime;
     boolean flipperOn, leadUp, leadDown, shooterOn, timedUp, timedDown;
     ColorImage fromCamera;
-    BinaryImage filteredImage;
+    BinaryImage filteredImage,threshholdImage,filteredSmallImage,convexHullImage;
     //robot initialization stuff here
 
     public void robotInit() {
         board = DriverStation.getInstance().getDashboardPackerLow();
+        //used to send the debug data to the display
+        LCD = DriverStationLCD.getInstance();
         timer = new Timer();
         //joystick initialization 
         right = new Joystick(2);
         left = new Joystick(1);
         //motor initialization
-        motor1 = new Victor(1);
-        motor2 = new Victor(2);
-
-        motor3 = new Victor(3);
-        motor4 = new Victor(4);
+        motor1 = new Jaguar(1);
+        motor2 = new Jaguar(2);
+        
+        motor3 = new Jaguar(3);
+        motor4 = new Jaguar(4);
 
         robot = new RobotDrive(motor1, motor2, motor3, motor4);
         leadScrew = new Victor(8);
         flipper = new Jaguar(7);
-        shooter2 = new Jaguar(6);
-        shooter1 = new Jaguar(5);
+        shooter2 = new Victor(6);
+        shooter1 = new Victor(5);
         //camera initialization
         camera = AxisCamera.getInstance();
         camera.writeCompression(30);
@@ -116,11 +121,10 @@ public class RobotTemplate extends SimpleRobot {
                 System.out.println("Start Image Processing");
                 camera.freshImage();
                 fromCamera=camera.getImage();
-                filteredImage = fromCamera.thresholdHSV(0, 255, 0, 255, 0, 255);
-                
+                threshholdImage = fromCamera.thresholdHSV(0, 255, 0, 255, 0, 255);
+                filteredSmallImage = threshholdImage.removeSmallObjects(true,5 );
+                filteredImage = filteredSmallImage.convexHull(true);
                 System.out.println("End Image Processing");
-            } catch(NIVisionException a){
-                System.out.println("Exception:"+a.getMessage());
             } catch(Exception v){
                 System.out.println("Exception:"+v.getMessage());
             }
@@ -178,21 +182,21 @@ public class RobotTemplate extends SimpleRobot {
                     leadScrew.set(0);
                 }
             }
-            X_val = (Math.abs(x) < 0.05) ? 0 : x * x;
+            xVal = (Math.abs(x) < 0.05) ? 0 : x * x;
             if(x>=0){
-                X_val = X_val;
+                xVal = xVal;
             }else{
-                X_val = -X_val;
+                xVal = -xVal;
             }
-            Y_val = (Math.abs(y) < 0.05) ? 0 : y * y;
+            yVal = (Math.abs(y) < 0.05) ? 0 : y * y;
             if(y>=0){
-                Y_val = Y_val; 
+                yVal = yVal; 
             }else {
-                Y_val = -Y_val;
+                yVal = -yVal;
             }
-            Rotation_val = (Math.abs(rotation) < 0.05) ? 0 : rotation * 0.6;
-            robot.mecanumDrive_Cartesian(X_val, Y_val , Rotation_val, 0);
-            System.out.println("Mecanum feed value X= "+X_val+" Y="+Y_val+" Z="+Rotation_val );
+            rotationVal = (Math.abs(rotation) < 0.05) ? 0 : rotation * 0.6;
+            robot.mecanumDrive_Cartesian(xVal, yVal , rotationVal, 0);
+            System.out.println("Mecanum feed value X= "+xVal+" Y="+yVal+" Z="+rotationVal );
             System.out.println("END");
             Timer.delay(0.01);
         } 
