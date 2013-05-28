@@ -207,6 +207,7 @@ public class RobotTemplate extends SimpleRobot {
      */
     public void test() {
         //does nothing
+        //blah blah testing
     }
     
     //diabled state
