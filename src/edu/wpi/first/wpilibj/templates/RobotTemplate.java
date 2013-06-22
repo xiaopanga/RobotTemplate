@@ -60,11 +60,8 @@ public class RobotTemplate extends SimpleRobot {
         //motor initialization
         motor1 = new Jaguar(1);
         motor2 = new Jaguar(2);
-
         motor3 = new Jaguar(3);
         motor4 = new Jaguar(4);
-
-        robot = new RobotDrive(motor3, motor4, motor1, motor2);
         leadScrew = new Victor(8);
         flipper = new Jaguar(7);
         shooter2 = new Victor(6);
@@ -114,74 +111,43 @@ public class RobotTemplate extends SimpleRobot {
      */
     public void operatorControl() {
         this.safetyOff();
-        //double time;
+        double time = 0;
         while (this.isOperatorControl() && this.isEnabled()) {
             //System.out.println("START");
-            /*try{
-             System.out.println("Start Image Processing");
-             camera.freshImage();
-             fromCamera=camera.getImage();
-             threshholdImage = fromCamera.thresholdHSV(0, 255, 0, 255, 0, 255);
-             filteredSmallImage = threshholdImage.removeSmallObjects(true,5 );
-             filteredImage = filteredSmallImage.convexHull(true);
-             System.out.println("End Image Processing");
-             } catch(Exception v){
-             System.out.println("Exception:"+v.getMessage());
-             }*/
+            try {
+                System.out.println("Start Image Processing");
+                camera.freshImage();
+                fromCamera = camera.getImage();
+
+                System.out.println("End Image Processing");
+            } catch (Exception v) {
+                System.out.println("Exception:" + v.getMessage());
+            }
 
             x = left.getX();
             y = left.getY();
             rotation = right.getX();
-            //System.out.println("joystick value"+" x:"+x+" y:"+y+" rotation:"+rotation+"\n");
             flipperOn = left.getTrigger();
             leadUp = left.getRawButton(3);
             leadDown = left.getRawButton(2);
             timedUp = left.getRawButton(8);
             timedDown = left.getRawButton(9);
             shooterOn = right.getTrigger();
-            //System.out.println("Flipper:"+flipperOn+"leadUp:"+leadUp+"leadDown:"+leadDown+"timedUp:"+timedUp+"timedDown:"+timedDown+"shooterOn:"+shooterOn);
+
 
             //drive control
-            xVal = (Math.abs(x) < 0.1) ? 0 : x * x;//square the value
-            if (x >= 0) {//give back the sign 
-                xVal = xVal;
-            } else {
-                xVal = -xVal;
-            }
-            yVal = (Math.abs(y) < 0.1) ? 0 : y * y;// square the value
-            if (y >= 0) {//give back the sign 
-                yVal = yVal;
-            } else {
-                yVal = -yVal;
-            }
+            xVal = filter(x, 0.1);
+            yVal = filter(y, 0.1);
             rotationVal = (Math.abs(rotation) < 0.1) ? 0 : rotation * 0.6;
 
-            double front_left = -yVal + rotationVal + xVal;
-            double front_right = -yVal - rotationVal - xVal;
-            double rear_left = -yVal + rotationVal - xVal;
-            double rear_right = -yVal - rotationVal + xVal;
-            motor1.set(front_left);
-            motor2.set(front_right);
-            motor3.set(rear_left);
-            motor4.set(rear_right);
-            double max = Math.abs(front_left);
-            if (Math.abs(front_right) > max) {
-                max = Math.abs(front_right);
-            }
-            if (Math.abs(rear_left) > max) {
-                max = Math.abs(rear_left);
-            }
-            if (Math.abs(rear_right) > max) {
-                max = Math.abs(rear_right);
-            }
-            if (max > 1) {
-                front_left /= max;
-                front_right /= max;
-                rear_left /= max;
-                rear_right /= max;
-            }
-            
-            
+            double[] MotorValues = mecanumMotorValue(xVal, yVal, rotationVal);
+            motor1.set(MotorValues[0]);
+            motor2.set(MotorValues[1]);
+            motor3.set(MotorValues[2]);
+            motor4.set(MotorValues[3]);
+
+
+
             //flipper control 
             if (flipperOn) {
                 flipper.set(-1);
@@ -199,36 +165,36 @@ public class RobotTemplate extends SimpleRobot {
                 shooter2.set(0);
             }
             //lead screw control 
+            double leadScrewValue = 0;
             if (leadUp) {
-                leadScrew.set(0.5);
+                leadScrewValue = 1;
                 System.out.println("Lead Screw up");
 
             } else {
                 if (leadDown) {
-                    leadScrew.set(-0.5);
+                    leadScrewValue = -1;
                     System.out.println("Lead Screw down");
                 } else {
-                    leadScrew.set(0);
+                    if (timedUp && timed < 5000) {
+                        time = timer.get();
+                        leadScrewValue = 1;
+                        timed = timed + (timer.get() - time);
+                        System.out.println("Lead Screw timed up");
+                    } else {
+                        if (timedDown && timed > 0) {
+                            time = timer.get();
+                            leadScrewValue = -1;
+                            timed = timed - (timer.get() - time);
+                            System.out.println("Lead Screw timed down");
+                        } else {
+                            leadScrew.set(0);
+
+                        }
+                    }
                 }
             }
-            /* if (timedUp && timed < 5000) {
-             time = timer.get();
-             leadScrew.set(1);
-             timed = timed + (timer.get() - time);
-             System.out.println("Lead Screw timed up");
-             } else {
-             if (timedDown && timed > 0) {
-             time = timer.get();
-             leadScrew.set(-1);
-             timed = timed - (timer.get() - time);
-             System.out.println("Lead Screw timed down");
-             } else {
-             leadScrew.set(0);
-             }
-             }*/
+            leadScrew.set(leadScrewValue);
 
-            //System.out.println("Mecanum feed value X= "+xVal+" Y="+yVal+" Z="+rotationVal );
-            //System.out.println("END");
             Timer.delay(0.01);
         }
     }
@@ -263,5 +229,45 @@ public class RobotTemplate extends SimpleRobot {
         shooter2.setSafetyEnabled(true);
         flipper.setSafetyEnabled(true);
         leadScrew.setSafetyEnabled(true);
+    }
+
+    public double filter(double value, double range) {
+        double filtered = (Math.abs(value) < 0.1) ? 0 : value * value;
+        if (value >= 0) {//give back the sign 
+            filtered = filtered;
+        } else {
+            filtered = -filtered;
+        }
+        return filtered;
+
+    }
+
+    public double[] mecanumMotorValue(double x, double y, double rotation) {
+        double[] motorValues = new double[4];
+        double front_left = -y + rotation + x;
+        double front_right = -y - rotation - x;
+        double rear_left = -y + rotation - x;
+        double rear_right = -y - rotation + x;
+        double max = Math.abs(front_left);
+        if (Math.abs(front_right) > max) {
+            max = Math.abs(front_right);
+        }
+        if (Math.abs(rear_left) > max) {
+            max = Math.abs(rear_left);
+        }
+        if (Math.abs(rear_right) > max) {
+            max = Math.abs(rear_right);
+        }
+        if (max > 1) {
+            front_left /= max;
+            front_right /= max;
+            rear_left /= max;
+            rear_right /= max;
+        }
+        motorValues[0] = front_left;
+        motorValues[1] = front_right;
+        motorValues[2] = rear_left;
+        motorValues[3] = rear_right;
+        return motorValues;
     }
 }
