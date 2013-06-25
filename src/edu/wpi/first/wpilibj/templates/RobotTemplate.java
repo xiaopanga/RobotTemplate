@@ -67,10 +67,10 @@ public class RobotTemplate extends SimpleRobot {
         shooter2 = new Victor(6);
         shooter1 = new Victor(5);
         //camera initialization
-        camera = AxisCamera.getInstance();
+        /*camera = AxisCamera.getInstance();
         camera.writeCompression(30);
         camera.writeMaxFPS(30);
-        camera.writeResolution(AxisCamera.ResolutionT.k320x240);
+        camera.writeResolution(AxisCamera.ResolutionT.k320x240);*/
         // autonomous delay time in ms
         delayStartTime = 2000;
         delayFlipperTimer = 2000;
@@ -110,11 +110,12 @@ public class RobotTemplate extends SimpleRobot {
      * This function is called once each time the robot enters operator control.
      */
     public void operatorControl() {
+        
         this.safetyOff();
         double time = 0;
         while (this.isOperatorControl() && this.isEnabled()) {
             //System.out.println("START");
-            try {
+            /*try {
                 System.out.println("Start Image Processing");
                 camera.freshImage();
                 fromCamera = camera.getImage();
@@ -122,7 +123,7 @@ public class RobotTemplate extends SimpleRobot {
                 System.out.println("End Image Processing");
             } catch (Exception v) {
                 System.out.println("Exception:" + v.getMessage());
-            }
+            }*/
 
             x = left.getX();
             y = left.getY();
@@ -209,7 +210,7 @@ public class RobotTemplate extends SimpleRobot {
 
     //diabled state
     public void disabled() {
-        this.safetyOff();
+        //this.safetyOff();
         while (this.isDisabled()) {
             Timer.delay(0.01);
         }
