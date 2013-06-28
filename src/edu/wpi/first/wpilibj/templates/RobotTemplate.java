@@ -30,7 +30,7 @@ public class RobotTemplate extends SimpleRobot {
     AxisCamera camera;
     Dashboard board;
     DriverStationLCD LCD;
-    RobotDrive robot;
+    //RobotDrive robot;
     Joystick left;
     Joystick right;
     Jaguar flipper;
@@ -217,7 +217,7 @@ public class RobotTemplate extends SimpleRobot {
     }
 
     public void safetyOff() {
-        robot.setSafetyEnabled(false);
+        //robot.setSafetyEnabled(false);
         shooter1.setSafetyEnabled(false);
         shooter2.setSafetyEnabled(false);
         flipper.setSafetyEnabled(false);
@@ -225,7 +225,7 @@ public class RobotTemplate extends SimpleRobot {
     }
 
     public void safetyOn() {
-        robot.setSafetyEnabled(true);
+        //robot.setSafetyEnabled(true);
         shooter1.setSafetyEnabled(true);
         shooter2.setSafetyEnabled(true);
         flipper.setSafetyEnabled(true);
