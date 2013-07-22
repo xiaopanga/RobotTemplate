@@ -143,9 +143,9 @@ public class RobotTemplate extends SimpleRobot {
 
             double[] MotorValues = mecanumMotorValue(xVal, yVal, rotationVal);
             motor1.set(MotorValues[0]);
-            motor2.set(MotorValues[1]);
+            motor2.set(-MotorValues[1]);
             motor3.set(MotorValues[2]);
-            motor4.set(MotorValues[3]);
+            motor4.set(-MotorValues[3]);
 
 
 
@@ -158,8 +158,8 @@ public class RobotTemplate extends SimpleRobot {
             }
             //shooter control
             if (shooterOn) {
-                shooter1.set(1);
-                shooter2.set(1);
+                shooter1.set(0.3);
+                shooter2.set(0.3);
                 System.out.println("Shooter on");
             } else {
                 shooter1.set(0);
