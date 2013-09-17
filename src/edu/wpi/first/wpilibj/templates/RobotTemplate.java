@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.Dashboard;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.camera.*;
 import edu.wpi.first.wpilibj.image.*;
+import edu.wpi.first.wpilibj.AnalogChannel;
 import edu.wpi.first.wpilibj.DriverStationLCD;
 
 /**
@@ -38,6 +39,7 @@ public class RobotTemplate extends SimpleRobot {
     Victor leadScrew;
     Jaguar motor1, motor2, motor3, motor4;
     Timer timer;
+    AnalogChannel ReedSwitch;
     double startTime, timed;
     double delayStartTime;
     double delayFlipperTimer;
@@ -47,10 +49,13 @@ public class RobotTemplate extends SimpleRobot {
     boolean flipperOn, leadUp, leadDown, shooterOn, timedUp, timedDown;
     ColorImage fromCamera;
     BinaryImage filteredImage, threshholdImage, filteredSmallImage, convexHullImage;
+
+    boolean tracker;
     //robot initialization stuff here
 
     public void robotInit() {
         board = DriverStation.getInstance().getDashboardPackerLow();
+        
         //used to send the debug data to the display
         LCD = DriverStationLCD.getInstance();
         timer = new Timer();
@@ -66,11 +71,12 @@ public class RobotTemplate extends SimpleRobot {
         flipper = new Jaguar(7);
         shooter2 = new Victor(6);
         shooter1 = new Victor(5);
+        ReedSwitch = new AnalogChannel(1);
         //camera initialization
         /*camera = AxisCamera.getInstance();
-        camera.writeCompression(30);
-        camera.writeMaxFPS(30);
-        camera.writeResolution(AxisCamera.ResolutionT.k320x240);*/
+         camera.writeCompression(30);
+         camera.writeMaxFPS(30);
+         camera.writeResolution(AxisCamera.ResolutionT.k320x240);*/
         // autonomous delay time in ms
         delayStartTime = 2000;
         delayFlipperTimer = 2000;
@@ -110,20 +116,11 @@ public class RobotTemplate extends SimpleRobot {
      * This function is called once each time the robot enters operator control.
      */
     public void operatorControl() {
-        
+
         this.safetyOff();
         double time = 0;
         while (this.isOperatorControl() && this.isEnabled()) {
-            //System.out.println("START");
-            /*try {
-                System.out.println("Start Image Processing");
-                camera.freshImage();
-                fromCamera = camera.getImage();
 
-                System.out.println("End Image Processing");
-            } catch (Exception v) {
-                System.out.println("Exception:" + v.getMessage());
-            }*/
 
             x = left.getX();
             y = left.getY();
@@ -142,15 +139,33 @@ public class RobotTemplate extends SimpleRobot {
             rotationVal = (Math.abs(rotation) < 0.1) ? 0 : rotation * 0.6;
 
             double[] MotorValues = mecanumMotorValue(xVal, yVal, rotationVal);
+            //double[] MotorValues = tankMotorValue(yVal, right.getY());
+            // double[] MotorValues = tankMotorValue2(yVal,xVal);
             motor1.set(MotorValues[0]);
             motor2.set(-MotorValues[1]);
             motor3.set(MotorValues[2]);
             motor4.set(-MotorValues[3]);
 
 
-
             //flipper control 
             if (flipperOn) {
+                
+              System.out.println(ReedSwitch.getVoltage());
+                
+                if (ReedSwitch.getVoltage() >= 0.2) {
+                    System.out.println(ReedSwitch.getVoltage());
+                    tracker = true;
+
+                } else {
+                    if(tracker == true)
+                    {
+                        System.out.println("it is working");
+                    }
+                        tracker= false;
+                    
+                }
+
+                
                 flipper.set(-1);
                 System.out.println("Flipper on");
             } else {
@@ -158,8 +173,8 @@ public class RobotTemplate extends SimpleRobot {
             }
             //shooter control
             if (shooterOn) {
-                shooter1.set(0.3);
-                shooter2.set(0.3);
+                shooter1.set(0.5);
+                shooter2.set(0.5);
                 System.out.println("Shooter on");
             } else {
                 shooter1.set(0);
@@ -269,6 +284,29 @@ public class RobotTemplate extends SimpleRobot {
         motorValues[1] = front_right;
         motorValues[2] = rear_left;
         motorValues[3] = rear_right;
+        return motorValues;
+    }
+
+    public double[] tankMotorValue(double axis1, double axis2) {
+        double[] motorValues = new double[4];
+        motorValues[0] = motorValues[1] = 0;
+        motorValues[2] = -0.5 * axis1;
+        motorValues[3] = -0.5 * axis2;
+        return motorValues;
+    }
+
+    public double[] tankMotorValue2(double axisY, double axisX) {
+        double[] motorValues = new double[4];
+        double leftValue = axisY + axisX * 2, rightValue = axisY - axisX * 2;
+        if (Math.abs(leftValue) >= 1 || Math.abs(rightValue) >= 1) {
+            double maxValue = (Math.abs(leftValue) >= Math.abs(rightValue)) ? Math.abs(leftValue) : Math.abs(rightValue);
+            leftValue /= maxValue;
+            rightValue /= maxValue;
+        }
+        motorValues[0] = 0;
+        motorValues[2] = -0.5 * leftValue;
+        motorValues[1] = 0;
+        motorValues[3] = -0.5 * rightValue;
         return motorValues;
     }
 }
