@@ -149,32 +149,39 @@ public class RobotTemplate extends SimpleRobot {
 
             //flipper control 
             if (flipperOn) {
-                
-              System.out.println(ReedSwitch.getVoltage());
-                
-                if (ReedSwitch.getVoltage() >= 0.2) {
-                    System.out.println(ReedSwitch.getVoltage());
-                    tracker = true;
-
-                } else {
-                    if(tracker == true)
-                    {
-                        System.out.println("it is working");
-                    }
-                        tracker= false;
-                    
-                }
-
-                
+                tracker=false;
+                int count=0;
+                boolean fin=false;
                 flipper.set(-1);
-                System.out.println("Flipper on");
+                while (fin == false) {
+
+                    if (count > 10) {
+                        break;
+                    }
+                    if (ReedSwitch.getVoltage() > 0.15) {
+                        System.out.println(ReedSwitch.getVoltage());
+                        tracker = true;
+                        count++;
+
+                    } else {
+                        if (tracker == true) {
+                            tracker = false;
+                            fin = true;
+                        }
+
+                    }
+
+                }
+                Timer.delay(0.2);
+                flipper.set(0);
+
             } else {
                 flipper.set(0);
             }
             //shooter control
             if (shooterOn) {
-                shooter1.set(0.5);
-                shooter2.set(0.5);
+                shooter1.set(1);
+                shooter2.set(1);
                 System.out.println("Shooter on");
             } else {
                 shooter1.set(0);
