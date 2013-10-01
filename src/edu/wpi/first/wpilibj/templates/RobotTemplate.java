@@ -79,7 +79,7 @@ public class RobotTemplate extends SimpleRobot {
          camera.writeResolution(AxisCamera.ResolutionT.k320x240);*/
         // autonomous delay time in ms
         delayStartTime = 2000;
-        delayFlipperTimer = 2000;
+        delayFlipperTimer = 5000;
         //initial value for leadscrew rise time
         riseTime = 0;
     }
@@ -89,17 +89,23 @@ public class RobotTemplate extends SimpleRobot {
      */
     public void autonomous() {
         this.safetyOff();
+        timer.start();
         shooter1.setSafetyEnabled(true);
         shooter2.setSafetyEnabled(true);
         flipper.setSafetyEnabled(true);
         startTime = timer.get();
-
+        System.out.println(startTime);
         //delayStartTime = 0;//how to get value from Dashboard?
         while (this.isAutonomous() && this.isEnabled()) {
+           // System.out.println("sum = "+(startTime + delayStartTime + delayFlipperTimer) );
+            //System.out.println("Cur time = "+timer.get());
             if (startTime + delayStartTime > timer.get()) {
                 shooter1.set(1);
                 shooter2.set(1);
-                if (startTime + delayStartTime + delayFlipperTimer > timer.get()) {
+                double temp = timer.get();
+                System.out.println(temp);
+                if ((startTime + 3) <temp ) {
+                    System.out.println("i am in");
                     flipper.set(-1);
                 }
             } else {
